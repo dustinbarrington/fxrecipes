@@ -1,4 +1,4 @@
-name = "fxrecipe-api"
+name = "fxrecipes-api"
 compatibility_date = "2024-01-01"
 main = "worker/index.js"
 
