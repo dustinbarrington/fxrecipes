@@ -5,6 +5,9 @@ import { getUserFromRequest, hashPassword, signToken, verifyPassword } from './a
 import { transformWithMockAI } from './mockAi.js'
 
 const app = new Hono()
+app.get('/health', (c) => {
+  return c.text('Worker is alive')
+})
 
 const diets = [
   'General Functional Nutrition',
