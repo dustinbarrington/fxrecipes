@@ -1,0 +1,65 @@
+const mockTransformations = {
+  cookies: {
+    recipeName: 'Classic Chocolate Chip Cookies | Functional Version',
+    mealType: 'dessert',
+    healingDiet: 'Blood Sugar Balance',
+    transformedIngredients: [
+      { action: 'SWAP', original: 'All-purpose flour', replacement: 'Almond flour + tapioca starch', reason: 'Eliminates gluten and refined carbs' },
+      { action: 'SWAP', original: 'Vegetable oil', replacement: 'Coconut oil or grass-fed butter', reason: 'Removes inflammatory seed oils' },
+      { action: 'SWAP', original: 'White sugar', replacement: 'Coconut sugar + raw honey', reason: 'Lower glycemic impact' },
+      { action: 'SWAP', original: 'Chocolate chips', replacement: '85%+ dark chocolate chunks', reason: 'Less sugar, higher antioxidants' },
+      { action: 'ADD', original: 'Sea salt flakes on top', replacement: '', reason: 'Mineral boost and flavor enhancer' },
+      { action: 'ADD', original: '1 tbsp collagen peptides', replacement: '', reason: 'Protein boost and gut support' },
+      { action: 'KEEP', original: 'Eggs', replacement: '', reason: 'Already functional and protein rich' },
+      { action: 'KEEP', original: 'Vanilla extract', replacement: '', reason: 'Already functional' },
+    ],
+    instructions: [
+      'Preheat oven to 350°F and line a baking sheet with parchment paper.',
+      'Whisk almond flour, tapioca starch, collagen peptides, and baking soda.',
+      'Cream coconut oil with coconut sugar and raw honey, then whisk in eggs and vanilla.',
+      'Fold in dark chocolate chunks and chill dough for 10 minutes.',
+      'Scoop onto pan, top with sea salt flakes, and bake 10-12 minutes until edges are golden.',
+    ],
+    prepTime: '15 min', cookTime: '12 min', servings: '12 cookies',
+    summary: 'The transformed version lowers glycemic load, removes seed oils, and boosts nutrient density while keeping the classic cookie experience.',
+    healthBenefits: ['Improved blood sugar stability', 'Higher protein and mineral density', 'Reduced inflammatory ingredients'],
+    badges: ['Blood Sugar Balance', 'Gluten Free', 'Paleo-friendly'],
+    nutritionComparison: { original: { calories: 220, protein: 2, carbs: 30, fat: 10 }, transformed: { calories: 210, protein: 6, carbs: 18, fat: 13 } },
+    inflammatoryLoad: 'low',
+  },
+  caesar: {
+    recipeName: 'Classic Caesar Salad | Functional Version',
+    mealType: 'lunch',
+    healingDiet: 'Anti-Inflammatory',
+    transformedIngredients: [
+      { action: 'SWAP', original: 'Store-bought croutons', replacement: 'Grain-free cassava crackers', reason: 'Eliminates gluten and processed oils' },
+      { action: 'SWAP', original: 'Conventional parmesan', replacement: "Sheep's milk pecorino", reason: 'More digestible and less inflammatory' },
+      { action: 'SWAP', original: 'Bottled Caesar dressing', replacement: 'Homemade dressing with avocado oil', reason: 'Removes seed oils and additives' },
+      { action: 'ADD', original: 'Wild caught anchovies', replacement: '', reason: 'Adds omega-3 fats and anti-inflammatory nutrients' },
+      { action: 'ADD', original: 'Hemp seeds', replacement: '', reason: 'Omega-3 boost and complete protein' },
+      { action: 'KEEP', original: 'Romaine lettuce', replacement: '', reason: 'Already functional and nutrient-rich' },
+      { action: 'KEEP', original: 'Lemon juice', replacement: '', reason: 'Already functional and fresh' },
+    ],
+    instructions: [
+      'Whisk avocado oil, lemon juice, garlic, Dijon, anchovies, and spices into a creamy dressing.',
+      'Chop romaine and toss with dressing until evenly coated.',
+      "Top with cassava cracker crunch, shaved sheep's milk pecorino, and hemp seeds.",
+      'Serve immediately with extra lemon and black pepper.',
+    ],
+    prepTime: '12 min', cookTime: '0 min', servings: '2 large salads',
+    summary: 'This version keeps the Caesar flavor profile while removing processed oils and gluten-heavy toppings.',
+    healthBenefits: ['Reduced inflammatory load', 'More omega-3 support', 'Higher satiety from complete proteins'],
+    badges: ['Anti-Inflammatory', 'Gluten Free', 'Dairy-Light'],
+    nutritionComparison: { original: { calories: 430, protein: 11, carbs: 22, fat: 33 }, transformed: { calories: 390, protein: 18, carbs: 14, fat: 28 } },
+    inflammatoryLoad: 'low',
+  },
+}
+
+export function transformWithMockAI(payload) {
+  const recipe = (payload.recipe || '').toLowerCase()
+  const mealType = payload.mealType || 'dinner'
+  const healingDiet = (payload.healingDiet || '').toLowerCase()
+  return healingDiet.includes('blood') || recipe.includes('cookie') || mealType === 'dessert'
+    ? mockTransformations.cookies
+    : mockTransformations.caesar
+}

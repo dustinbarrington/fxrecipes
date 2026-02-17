@@ -1,0 +1,8 @@
+name = "fxrecipe-api"
+compatibility_date = "2024-01-01"
+main = "worker/index.js"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "fxrecipe-db"
+database_id = "PLACEHOLDER"
