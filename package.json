@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "VITE_BUILD_VERSION=${VITE_BUILD_VERSION:-$(date -u +%Y%m%d%H%M%S)} vite build",
     "preview": "vite preview",
     "worker:dev": "wrangler dev",
     "worker:deploy": "wrangler deploy"

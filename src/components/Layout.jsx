@@ -19,7 +19,7 @@ const navClass = ({ isActive }) =>
 
 export default function Layout({ children }) {
   const { user, logout } = useAuth()
-  const buildVersion = typeof __BUILD_VERSION__ !== 'undefined' ? __BUILD_VERSION__ : 'dev'
+  const buildVersion = import.meta.env.VITE_BUILD_VERSION || 'dev'
   return (
     <div className="min-h-screen pb-24 md:pb-8">
       <header className="sticky top-0 z-20 border-b border-sage/20 bg-cream/95 backdrop-blur">
