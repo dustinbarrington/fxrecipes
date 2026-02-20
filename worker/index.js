@@ -5,6 +5,9 @@ import { getUserFromRequest, hashPassword, signToken, verifyPassword } from './a
 import { transformWithMockAI } from './mockAi.js'
 
 const app = new Hono()
+app.get('/health', (c) => {
+  return c.text('Worker is alive')
+})
 
 const diets = [
   'General Functional Nutrition',
@@ -30,82 +33,6 @@ app.use('*', async (c, next) => {
 })
 
 const getClientIp = (c) => c.req.header('CF-Connecting-IP') || c.req.header('x-forwarded-for') || '0.0.0.0'
-
-
-function decodeHtml(value = '') {
-  return value
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/\s+/g, ' ')
-    .trim()
-}
-
-function normalizeInstruction(item) {
-  if (!item) return ''
-  if (typeof item === 'string') return item
-  if (typeof item === 'object' && item.text) return item.text
-  if (typeof item === 'object' && item.name) return item.name
-  return ''
-}
-
-function extractRecipeFromHtml(html = '') {
-  const scriptMatches = [...html.matchAll(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)]
-  for (const match of scriptMatches) {
-    try {
-      const json = JSON.parse(match[1])
-      const blocks = Array.isArray(json) ? json : [json]
-      const candidates = []
-      const crawl = (node) => {
-        if (!node) return
-        if (Array.isArray(node)) return node.forEach(crawl)
-        if (typeof node === 'object') {
-          if (node['@type'] === 'Recipe' || (Array.isArray(node['@type']) && node['@type'].includes('Recipe'))) candidates.push(node)
-          Object.values(node).forEach(crawl)
-        }
-      }
-      blocks.forEach(crawl)
-      const recipe = candidates[0]
-      if (recipe) {
-        const ingredients = (recipe.recipeIngredient || []).map((i) => decodeHtml(String(i))).filter(Boolean)
-        const instructionsRaw = recipe.recipeInstructions || []
-        const instructions = (Array.isArray(instructionsRaw) ? instructionsRaw : [instructionsRaw])
-          .map(normalizeInstruction)
-          .map((i) => decodeHtml(String(i)))
-          .filter(Boolean)
-        if (ingredients.length || instructions.length) {
-          const name = decodeHtml(String(recipe.name || 'Recipe from URL'))
-          const text = [name, 'Ingredients:', ...ingredients, 'Instructions:', ...instructions].join('\n')
-          return { name, text, ingredients, instructions }
-        }
-      }
-    } catch {}
-  }
-
-  const textFallback = decodeHtml(html.replace(/<script[\s\S]*?<\/script>/gi, ' ').replace(/<style[\s\S]*?<\/style>/gi, ' ').replace(/<[^>]+>/g, ' '))
-  return { name: 'Recipe from URL', text: textFallback }
-}
-
-async function resolveRecipeInput(input) {
-  if (input.inputMethod !== 'url' || !input.recipeUrl) return input
-  try {
-    const url = new URL(input.recipeUrl)
-    const res = await fetch(url.toString(), { method: 'GET' })
-    if (!res.ok) return input
-    const html = await res.text()
-    const extracted = extractRecipeFromHtml(html)
-    return {
-      ...input,
-      recipe: extracted.text || input.recipe || '',
-      description: extracted.name || input.description || '',
-    }
-  } catch {
-    return input
-  }
-}
-
 
 async function getUsage(c, userId = null) {
   const key = monthKey()
@@ -186,30 +113,18 @@ app.get('/api/auth/me', async (c) => {
 app.get('/api/usage', async (c) => {
   const maybeUser = await getUserFromRequest(c, false)
   const used = await getUsage(c, maybeUser?.id)
-  return c.json({ used, limit: null, remaining: null, unlimited: true })
+  return c.json({ used, limit: 3, remaining: Math.max(0, 3 - used) })
 })
 
 app.post('/api/transform', async (c) => {
   const maybeUser = await getUserFromRequest(c, false)
+  const used = await getUsage(c, maybeUser?.id)
+  if (used >= 3) return c.json({ error: 'Monthly limit reached', upgrade: true }, 403)
 
-  const rawInput = await c.req.json()
-  const input = await resolveRecipeInput(rawInput)
+  const input = await c.req.json()
   if (!input?.recipe && !input?.description) return c.json({ error: 'Recipe input required' }, 400)
 
   const transformed = transformWithMockAI(input)
-  const sourceText = String(input.recipe || input.description || '')
-  console.log('[transform-debug]', JSON.stringify({
-    inputPreview: sourceText.slice(0, 200),
-    criteria: {
-      inputMethod: input.inputMethod || 'paste',
-      healingDiet: input.healingDiet || null,
-      preferences: input.preferences || [],
-      mealType: input.mealType || null,
-      recipeUrl: input.recipeUrl || null,
-    },
-    detectedTitle: transformed.detectedTitle || transformed.recipeName || null,
-    fallbackTriggered: Boolean(transformed.fallbackTriggered),
-  }))
   await incrementUsage(c, maybeUser?.id)
   return c.json(transformed)
 })
