@@ -1,7 +1,7 @@
-const BASE_URL = import.meta.env.VITE_API_URL || 'https://fxrecipe-api.YOUR-SUBDOMAIN.workers.dev'
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000'
 
 export async function api(path, { method = 'GET', body, token } = {}) {
-  const res = await fetch(`${BASE_URL}${path}`, {
+  const res = await fetch(`${API_BASE}${path}`, {
     method,
     headers: {
       'Content-Type': 'application/json',
@@ -15,4 +15,4 @@ export async function api(path, { method = 'GET', body, token } = {}) {
   return data
 }
 
-export { BASE_URL }
+export { API_BASE }
